@@ -62,5 +62,34 @@ const connect = async () => {
         }
     });
 
+    app.put('/veiculo/:placa', async (req, res) => {
+        const { placa } = req.params;
+        const { nome, cor, ano, modelo, n_chassi, unico_dono } = req.body;
+
+        if(!nome || !cor || !ano || !modelo || !n_chassi || unico_dono === undefined) {
+            return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+        }
+
+        try{
+            const result = await db.query(
+                `
+                UPDATE veiculo 
+                 SET nome=$1, cor=$2, ano=$3, modelo=$4, n_chassi=$5, unico_dono=$6 
+                 WHERE placa=$7
+                 `,
+                 [nome, cor, ano, modelo, n_chassi, unico_dono, placa]
+
+            );
+
+            if(result.row.lenght === 0){
+                return res.status(404).json({ message: 'Veículo não encontrado' })
+            }
+
+            res.status(200).json({ message: 'Veículo alterado com sucesso' });
+        } catch(err) {
+            res.status(500).json({ message: 'Erro ao alterar veículo', erro: err.message });
+        }
+    });
+
 
 }
