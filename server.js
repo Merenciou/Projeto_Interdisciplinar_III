@@ -42,4 +42,25 @@ const connect = async () => {
             
         }
     });
+
+    app.get('/veiculo/:placa', async (req, res) => {
+        const { placa } = req.params;
+
+        try{
+            const result = await db.query(
+                `SELECT * FROM veiculo WHERE placa = $1`,
+                [placa]
+            );
+
+            if(result.row.lenght === 0){
+                return res.status(404).json({ message: 'Veículo não encontrado' });
+            }
+
+            res.status(200).json(result.row[0]);
+        } catch(err) {
+            res.status(500).json({ message: 'Erro ao pesquisar veículo', erro: err.message });
+        }
+    });
+
+
 }
