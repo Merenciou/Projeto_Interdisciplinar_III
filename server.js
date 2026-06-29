@@ -91,5 +91,32 @@ const connect = async () => {
         }
     });
 
+    app.delete('/veiculo/:placa', async (req, res) => {
+    const { placa } = req.params;
+
+    try {
+        const result = await db.query(
+            `
+            DELETE FROM veiculo
+            WHERE placa = $1
+            `,
+        );
+
+        if(result.row.lenght === 0){
+            return res.status(404).json({ message: 'Veiculo não encontrado' });
+        }
+
+        res.status(200).json({ message: 'Veículo excluído com sucesso' });
+    } catch (err) {
+        res.status(500).json({ message: 'Erro ao excluir veículo' });
+    }
+    });
+
+    app.listen(3000, () => {
+        console.log('Servidor rodando na porta 3000');
+    });
+
+    connect();
+
 
 }
