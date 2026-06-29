@@ -1,4 +1,6 @@
 require('dotenv').config();
+const PORT = process.env.SERVER_PORT || 3000;
+const HOST = process.env.SERVER_HOST;
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./src/db');
@@ -112,8 +114,8 @@ const connect = async () => {
     }
     });
 
-    app.listen(3000, () => {
-        console.log('Servidor rodando na porta 3000');
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando em http://${HOST}:${PORT}`);
     });
 
     connect();
