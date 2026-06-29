@@ -1,6 +1,6 @@
 require('dotenv').config();
-const PORT = process.env.SERVER_PORT || 3000;
-const HOST = process.env.SERVER_HOST;
+const SERVER_PORT = process.env.SERVER_PORT || 3000;
+const SERVER_HOST = process.env.SERVER_HOST || 'localhost';
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./src/db');
@@ -8,117 +8,106 @@ const fs = require('fs');
 
 const app = express();
 app.use(cors());
-app.use(express.json);
+app.use(express.json());
 
 let db;
 
 const connect = async () => {
-    db = await connectDB;
+  db = await connectDB();
 
-    // Talvez tirar essa parte
-    app.post('/veiculo', async (req, res) => {
-        const { placa, nome, cor, ano, modelo, n_chassi, unico_dono } = req.body;
+  app.post('/veiculo', async (req, res) => {
+    const { placa, nome, cor, ano, modelo, n_chassi, unico_dono } = req.body;
 
-        if(!placa || !nome || !cor || !ano || !modelo || !n_chassi || unico_dono === undefined) {
-            return res.status(400).json({ message: 'Todos os campos são obrigatórios!'});
-        }
+    if (!placa || !nome || !cor || !ano || !modelo || !n_chassi || unico_dono === undefined) {
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios!' });
+    }
 
-        try{
-            await db.query(
-                `
-                INSERT INTO veiculo (placa, nome, cor, ano, modelo, n_chassi, unico_dono)
-                VALUES ($1,2$,3$,4$,5$,6$,7$)
-                `,
-                [placa, nome, cor, ano, modelo, n_chassi, unico_dono]
-            );
+    try {
+      await db.query(
+        `INSERT INTO veiculo (placa, nome, cor, ano, modelo, n_chassi, unico_dono)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [placa, nome, cor, ano, modelo, n_chassi, unico_dono]
+      );
 
-            const row = `placa: ${placa} | nome: ${nome} | cor: ${cor} | ano: ${ano} | modelo: ${modelo} | n_chassi: ${n_chassi} | unico_dono: ${unico_dono}/n`;
-            fs.appendFileSync('veiculo.text', row);
+      const row = `placa: ${placa} | nome: ${nome} | cor: ${cor} | ano: ${ano} | modelo: ${modelo} | n_chassi: ${n_chassi} | unico_dono: ${unico_dono}\n`; // ← \n corrigido
+      fs.appendFileSync('veiculo.txt', row);
 
-            res.status(201).json({ message: 'Veículo salvo com sucesso.'});
-        } catch (err) {
-            if(err.code === '23505') {
-                return res.status(400).json({ message: 'Placa ou chassi já cadastrado.' });
-            }
-            res.status(500).json({ message: 'Erro ao salvar o veículo.', erro: err.message });
-            
-        }
-    });
+      res.status(201).json({ message: 'Veículo salvo com sucesso.' });
+    } catch (err) {
+      if (err.code === '23505') {
+        return res.status(400).json({ message: 'Placa ou chassi já cadastrado.' });
+      }
+      res.status(500).json({ message: 'Erro ao salvar o veículo.', erro: err.message });
+    }
+  });
 
-    app.get('/veiculo/:placa', async (req, res) => {
-        const { placa } = req.params;
-
-        try{
-            const result = await db.query(
-                `SELECT * FROM veiculo WHERE placa = $1`,
-                [placa]
-            );
-
-            if(result.row.lenght === 0){
-                return res.status(404).json({ message: 'Veículo não encontrado' });
-            }
-
-            res.status(200).json(result.row[0]);
-        } catch(err) {
-            res.status(500).json({ message: 'Erro ao pesquisar veículo', erro: err.message });
-        }
-    });
-
-    app.put('/veiculo/:placa', async (req, res) => {
-        const { placa } = req.params;
-        const { nome, cor, ano, modelo, n_chassi, unico_dono } = req.body;
-
-        if(!nome || !cor || !ano || !modelo || !n_chassi || unico_dono === undefined) {
-            return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
-        }
-
-        try{
-            const result = await db.query(
-                `
-                UPDATE veiculo 
-                 SET nome=$1, cor=$2, ano=$3, modelo=$4, n_chassi=$5, unico_dono=$6 
-                 WHERE placa=$7
-                 `,
-                 [nome, cor, ano, modelo, n_chassi, unico_dono, placa]
-
-            );
-
-            if(result.row.lenght === 0){
-                return res.status(404).json({ message: 'Veículo não encontrado' })
-            }
-
-            res.status(200).json({ message: 'Veículo alterado com sucesso' });
-        } catch(err) {
-            res.status(500).json({ message: 'Erro ao alterar veículo', erro: err.message });
-        }
-    });
-
-    app.delete('/veiculo/:placa', async (req, res) => {
+  app.get('/veiculo/:placa', async (req, res) => {
     const { placa } = req.params;
 
     try {
-        const result = await db.query(
-            `
-            DELETE FROM veiculo
-            WHERE placa = $1
-            `,
-        );
+      const result = await db.query(
+        `SELECT * FROM veiculo WHERE placa = $1`,
+        [placa]
+      );
 
-        if(result.row.lenght === 0){
-            return res.status(404).json({ message: 'Veiculo não encontrado' });
-        }
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Veículo não encontrado' });
+      }
 
-        res.status(200).json({ message: 'Veículo excluído com sucesso' });
+      res.status(200).json(result.rows[0]);
     } catch (err) {
-        res.status(500).json({ message: 'Erro ao excluir veículo' });
+      res.status(500).json({ message: 'Erro ao pesquisar veículo', erro: err.message });
     }
-    });
+  });
 
-    app.listen(PORT, () => {
-        console.log(`Servidor rodando em http://${HOST}:${PORT}`);
-    });
+  app.put('/veiculo/:placa', async (req, res) => {
+    const { placa } = req.params;
+    const { nome, cor, ano, modelo, n_chassi, unico_dono } = req.body;
 
-    connect();
+    if (!nome || !cor || !ano || !modelo || !n_chassi || unico_dono === undefined) {
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+    }
 
+    try {
+      const result = await db.query(
+        `UPDATE veiculo 
+         SET nome=$1, cor=$2, ano=$3, modelo=$4, n_chassi=$5, unico_dono=$6 
+         WHERE placa=$7`,
+        [nome, cor, ano, modelo, n_chassi, unico_dono, placa]
+      );
 
-}
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Veículo não encontrado' });
+      }
+
+      res.status(200).json({ message: 'Veículo alterado com sucesso' });
+    } catch (err) {
+      res.status(500).json({ message: 'Erro ao alterar veículo', erro: err.message });
+    }
+  });
+
+  app.delete('/veiculo/:placa', async (req, res) => {
+    const { placa } = req.params;
+
+    try {
+      const result = await db.query(
+        `DELETE FROM veiculo WHERE placa = $1`,
+        [placa]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Veículo não encontrado' });
+      }
+
+      res.status(200).json({ message: 'Veículo excluído com sucesso' });
+    } catch (err) {
+      res.status(500).json({ message: 'Erro ao excluir veículo', erro: err.message });
+    }
+  });
+
+  app.listen(SERVER_PORT, SERVER_HOST, () => {
+    console.log(`Servidor rodando em http://${SERVER_HOST}:${SERVER_PORT}`);
+  });
+};
+
+connect().catch((err) => console.error('Erro ao iniciar servidor:', err.message));
