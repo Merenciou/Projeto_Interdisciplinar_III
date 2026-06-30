@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./src/db');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -39,6 +40,20 @@ const connect = async () => {
       }
       res.status(500).json({ message: 'Erro ao salvar o veículo.', erro: err.message });
     }
+  });
+
+  app.get('/veiculo/download', (req, res) => {
+    const filePath = path.join(__dirname, 'veiculo.txt');
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Arquivo não encontrado' });
+    }
+
+    res.download(filePath, 'veiculo.txt');
+  });
+
+  app.listen(SERVER_PORT, SERVER_HOST, () => {
+    console.log(`Servidor rodando em http://${SERVER_HOST}:${SERVER_PORT}`);
   });
 
   app.get('/veiculo/:placa', async (req, res) => {
@@ -103,10 +118,6 @@ const connect = async () => {
     } catch (err) {
       res.status(500).json({ message: 'Erro ao excluir veículo', erro: err.message });
     }
-  });
-
-  app.listen(SERVER_PORT, SERVER_HOST, () => {
-    console.log(`Servidor rodando em http://${SERVER_HOST}:${SERVER_PORT}`);
   });
 };
 
