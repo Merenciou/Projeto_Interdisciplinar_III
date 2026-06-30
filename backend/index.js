@@ -120,4 +120,4 @@ const connect = async () => {
   });
 };
 
-connect().catch((err) => console.error('Erro ao iniciar servidor:', err.message));
+connect().catch((err) => console.error('Erro ao iniciar servidor:', err));
