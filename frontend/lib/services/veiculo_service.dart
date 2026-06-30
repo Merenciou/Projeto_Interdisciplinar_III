@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class VeiculoService {
-  final String baseUrl = 'http://localhost:3000';
+  final String baseUrl = 'https://projetoiiii-production.up.railway.app';
 
   Future<Map<String, dynamic>> salvar(Veiculo veiculo) async {
     try {
