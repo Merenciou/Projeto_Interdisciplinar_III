@@ -1,4 +1,3 @@
-require('dotenv').config();
 const SERVER_PORT = process.env.SERVER_PORT || 3000;
 const SERVER_HOST = process.env.SERVER_HOST || 'localhost';
 const express = require('express');
